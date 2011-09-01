@@ -26,6 +26,11 @@
     [done] capified!
 
 
+!SLIDE bullets incremental
+# Capfile
+* czyli Makefile, Rakefile
+
+
 !SLIDE
 # git #
     @@@ ruby
@@ -77,9 +82,53 @@
     set :keep_releases, 10
 
 
+!SLIDE
+# serwer
+    @@@ ruby
+    role :web, "beer-machine.com"
+    role :app, "beer-machine.com"
+    role :db,  "beer-machine.com", :primary => true
+
+
+!SLIDE
+# serwery (bigger than Google!)
+    @@@ ruby
+    role :web, "beer-machine.com"
+    role :app,
+      ["app1.beer-machine.com", "app2.beer-machine.com"]
+    role :db,
+      "db1.beer-machine.com", :primary => true
+    role :db,
+      ["db2.beer-machine.com", "db3.beer-machine.com"]
+
+
 !SLIDE commandline incremental
 # ich pierwszy raz
     $ cap deploy:setup
+    /home/beer_machine/app
+    /home/beer_machine/app/releases
+    /home/beer_machine/app/shared
+    /home/beer_machine/app/shared/log
+    /home/beer_machine/app/shared/pids
+    /home/beer_machine/app/shared/system
+
+
+!SLIDE bullets incremental
+# ~/app/releases
+* zawiera kolejne wdrożenia
+* ~/app/releases/20110901201000
+* ~/app/releases/20110903110415
+* ~/app/releases/...
+
+
+!SLIDE commandline incremental
+# pasy zapięte?
+    $ cap deploy:check
+
+
+!SLIDE commandline incremental
+# pierwsza aktualizacja kodu
+    $ cap deploy:update
 
 
 !SLIDE commandline incremental
