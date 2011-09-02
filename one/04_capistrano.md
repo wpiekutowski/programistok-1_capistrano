@@ -6,7 +6,7 @@
 !SLIDE bullets incremental
 # platformy
 * Linux
-* Windows Server (gem capistrano-windows-server)
+* Windows Server
 
 
 !SLIDE bullets incremental
@@ -35,7 +35,8 @@
 # git #
     @@@ ruby
     set :scm, "git"
-    set :repository, "git@amberbit.com:beer_machine.git"
+    set :repository,
+      "git@amberbit.com:beer_machine.git"
 
 
 !SLIDE
@@ -62,10 +63,12 @@
 # strategia wdrożenia
     @@@ ruby
     set :deploy_via, :remote_cache
+    # or
+    set :deploy_via, :export
 
 
 !SLIDE
-# user
+# app/deploy user
     @@@ ruby
     set :user, "beer_machine"
 
@@ -95,15 +98,15 @@
     @@@ ruby
     role :web, "beer-machine.com"
     role :app,
-      ["app1.beer-machine.com", "app2.beer-machine.com"]
+      "app1.beer-machine.com", "app2.beer-machine.com"
     role :db,
       "db1.beer-machine.com", :primary => true
     role :db,
-      ["db2.beer-machine.com", "db3.beer-machine.com"]
+      "db2.beer-machine.com", "db3.beer-machine.com"
 
 
 !SLIDE commandline incremental
-# ich pierwszy raz
+# ich pierwszy raz ♥
     $ cap deploy:setup
     /home/beer_machine/app
     /home/beer_machine/app/releases
@@ -131,11 +134,6 @@
     $ cap deploy:update
 
 
-!SLIDE commandline incremental
-# do dzieła!
-    $ cap deploy
-
-
 !SLIDE bullets incremental
 # deploy:update_code
 * pobierz najnowszy kod z git/svn
@@ -148,11 +146,93 @@
 * ustaw datę modyfikacji plików na teraz
 
 
+!SLIDE commandline incremental
+# do dzieła!
+    $ cap deploy
+
+
 !SLIDE bullets incremental
 # deploy:symlink
 * stwórz link symboliczny app/current → app/releases/20110901191102
 
 
-!SLIDE bullets incremental
+!SLIDE bullets
 # deploy:restart
 * zrestartuj serwery aplikacji
+
+!SLIDE image center
+![AmberBit](images/message.jpg)
+
+!SLIDE bullets
+# fail?
+* cap deploy:rollback
+
+!SLIDE bullets
+# ssh?
+* cap shell
+
+
+!SLIDE command
+# config/deploy.rb
+    @@@ ruby
+    set :scm, :git
+    set :repository, "git@amberbit.com:beer_machine.git"
+    set :branch, "v1.24.2"
+    set :deploy_via, :remote_cache
+    set :keep_releases, 10
+
+!SLIDE command
+# config/deploy.rb
+    @@@ ruby
+    set :application, "beer_machine"
+    set :stage, "production"
+    set :user, "#{application}-#{stage}"
+    set :group, "#{application}-#{stage}"
+
+!SLIDE command
+# config/deploy.rb
+    @@@ ruby
+    role :web, "amberbit.com"
+    role :app, "amberbit.com"
+    role :db,  "amberbit.com", :primary => true
+    set :url, "beer-machine.amberbit.com"
+    set :deploy_to, "/home/#{user}/app"
+
+!SLIDE command
+# config/deploy.rb
+    @@@ ruby
+    namespace :deploy do
+      task :start do ; end
+      task :stop do ; end
+
+      desc "Restart passenger"
+      task :restart, :roles => :app do
+        file = File.join(current_path, 'tmp',
+          'restart.txt')
+        run "touch #{file}"
+        run "curl #{fetch :url} &"
+      end
+    end
+
+!SLIDE command
+# config/deploy.rb
+    @@@ ruby
+    namespace :config do
+      desc "Link shared configurations in release"
+      task :link_shared_configurations, :roles => :app do
+        files = %w[mongoid.yml application/config.yml]
+        files.each do |f|
+          from = "#{shared_path}/config/#{f}"
+          to = "#{release_path}/config/#{f}"
+          run "ln -nsf #{from} #{to}"
+        end
+      end
+    end
+
+!SLIDE command
+# config/deploy.rb
+    @@@ ruby
+    after "deploy:update_code",
+      "config:link_shared_configurations"
+    after "deploy:update_code",
+      "deploy:cleanup" # remove old releases
